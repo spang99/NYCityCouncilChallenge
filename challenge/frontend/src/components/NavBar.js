@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate, Navigate } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Box, IconButton, Avatar, Menu, MenuItem } from '@mui/material';
+import { AppBar, Toolbar, Typography, Box, IconButton, Avatar, Menu, MenuItem, ListItemText, ListItemIcon } from '@mui/material';
+import { Logout } from '@mui/icons-material';
+import axios from 'axios';
+import config from '../config';
 
 const menuStyles = {
   transformOrigin: { horizontal: 'right', vertical: 'top' },
@@ -13,14 +16,46 @@ const avatarStyles = {
   height: 32,
 };
 
+const userInfoStyles = {
+  '& .MuiListItemText-primary': {
+    color: 'text.primary',
+    fontWeight: 'bold',
+    fontSize: '1rem',
+  },
+  '& .MuiListItemText-secondary': {
+    color: 'text.secondary',
+    fontSize: '0.875rem',
+  },
+  '&.Mui-disabled': {
+    opacity: 1,
+  },
+};
+
 const NavBar = ({ children }) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const token = localStorage.getItem('token');
 
-  if (!token) {
-    return <Navigate to="/" replace />;
-  }
+  useEffect(() => {
+    if (!token) {
+      navigate('/');
+      return;
+    }
+
+    const fetchUserProfile = async () => {
+      try {
+        const response = await axios.get(`${config.api.baseURL}${config.api.endpoints.profile}`, {
+          headers: { Authorization: `Token ${token}` }
+        });
+        setUserProfile(response.data);
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+
+    fetchUserProfile();
+  }, [token, navigate]);
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -34,6 +69,10 @@ const NavBar = ({ children }) => {
     localStorage.removeItem('token');
     navigate('/');
   };
+
+  if (!token) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <>
@@ -51,7 +90,9 @@ const NavBar = ({ children }) => {
               aria-haspopup="true"
               aria-expanded={Boolean(anchorEl) ? 'true' : undefined}
             >
-              <Avatar sx={avatarStyles}>U</Avatar>
+              <Avatar sx={avatarStyles}>
+                {userProfile?.first_name?.[0] || 'U'}
+              </Avatar>
             </IconButton>
             <Menu
               id="user-menu"
@@ -62,7 +103,22 @@ const NavBar = ({ children }) => {
               transformOrigin={menuStyles.transformOrigin}
               anchorOrigin={menuStyles.anchorOrigin}
             >
-              <MenuItem onClick={handleLogout}>Logout</MenuItem>
+              {userProfile && (
+                <>
+                  <MenuItem disabled sx={userInfoStyles}>
+                    <ListItemText 
+                      primary={userProfile.full_name} 
+                      secondary={`District ${userProfile.district}`}
+                    />
+                  </MenuItem>
+                  <MenuItem onClick={handleLogout}>
+                    <ListItemIcon>
+                      <Logout fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Logout</ListItemText>
+                  </MenuItem>
+                </>
+              )}
             </Menu>
           </Box>
         </Toolbar>

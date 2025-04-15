@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from rest_framework.response import Response
 from .models import Complaint, UserProfile
-from .serializers import ComplaintSerializer
+from .serializers import ComplaintSerializer, UserProfileSerializer
 from django.db.models import Count
 from django.db.models import Q
 
@@ -139,4 +139,16 @@ class ConstituentComplaintsViewSet(viewsets.ModelViewSet):
     def list(self, request):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+class UserProfileViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get']
+    serializer_class = UserProfileSerializer
+
+    def get_queryset(self):
+        return UserProfile.objects.filter(user=self.request.user)
+
+    def list(self, request):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset.first())
         return Response(serializer.data)

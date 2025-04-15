@@ -3,6 +3,7 @@ const config = {
     baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000',
     endpoints: {
       login: '/login/',
+      profile: '/api/complaints/profile/',
       complaints: {
         all: '/api/complaints/allComplaints/',
         open: '/api/complaints/openCases/',
