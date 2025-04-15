@@ -17,7 +17,7 @@ class ComplaintViewSet(viewsets.ModelViewSet):
             district = f"0{district}"
         
         formatted_district = f"NYCC{district}"
-        return Complaint.objects.filter(account=formatted_district)
+        return Complaint.objects.filter(council_dist=formatted_district)
 
     def list(self, request):
         queryset = self.get_queryset()
@@ -121,3 +121,22 @@ class TopComplaintTypeViewSet(viewsets.ModelViewSet):
     def list(self, request):
         queryset = self.get_queryset()
         return Response(queryset)
+
+class ConstituentComplaintsViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get']
+    serializer_class = ComplaintSerializer
+
+    def get_queryset(self):
+        user_profile = UserProfile.objects.get(user=self.request.user)
+        district = user_profile.district
+        
+        if len(district) == 1:
+            district = f"0{district}"
+        
+        formatted_district = f"NYCC{district}"
+        return Complaint.objects.filter(account=formatted_district)
+
+    def list(self, request):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

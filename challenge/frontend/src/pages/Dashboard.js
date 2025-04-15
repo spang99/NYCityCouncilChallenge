@@ -9,6 +9,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Button,
+  ButtonGroup
 } from '@mui/material';
 import axios from 'axios';
 import config from '../config';
@@ -25,6 +27,26 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [complaintTypeFilter, setComplaintTypeFilter] = useState('');
+  const [viewMode, setViewMode] = useState('district'); // 'district' or 'constituent'
+
+  const fetchComplaints = async (mode) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Token ${token}` };
+      let endpoint = mode === 'constituent' 
+        ? `${config.api.baseURL}${config.api.endpoints.complaints.constituent}`
+        : `${config.api.baseURL}${config.api.endpoints.complaints.all}`;
+      
+      const response = await axios.get(endpoint, { headers });
+      setStats(prev => ({
+        ...prev,
+        allComplaints: response.data
+      }));
+    } catch (err) {
+      console.error('Error fetching complaints:', err);
+      setError('Failed to fetch complaints');
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -55,6 +77,11 @@ const Dashboard = () => {
 
     fetchData();
   }, []);
+
+  const handleViewChange = async (mode) => {
+    setViewMode(mode);
+    await fetchComplaints(mode);
+  };
 
   const complaintTypes = stats.allComplaints 
     ? [...new Set(stats.allComplaints.map(complaint => complaint.complaint_type || '').filter(Boolean))].sort()
@@ -115,7 +142,23 @@ const Dashboard = () => {
       </Grid>
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">Complaints</Typography>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Typography variant="h6">Complaints</Typography>
+          <ButtonGroup variant="outlined">
+            <Button 
+              onClick={() => handleViewChange('district')}
+              variant={viewMode === 'district' ? 'contained' : 'outlined'}
+            >
+              District Complaints
+            </Button>
+            <Button 
+              onClick={() => handleViewChange('constituent')}
+              variant={viewMode === 'constituent' ? 'contained' : 'outlined'}
+            >
+              Complaints by My Constituents
+            </Button>
+          </ButtonGroup>
+        </Box>
         <FormControl sx={{ minWidth: 200 }}>
           <InputLabel id="complaint-type-filter-label">Filter by Type</InputLabel>
           <Select

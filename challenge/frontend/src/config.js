@@ -8,6 +8,7 @@ const config = {
         open: '/api/complaints/openCases/',
         closed: '/api/complaints/closedCases/',
         top: '/api/complaints/topComplaints/',
+        constituent: '/api/complaints/constituentComplaints/'
       }
     }
   }
